@@ -2,9 +2,10 @@
 var w,h; // window width / height 
 var stage; // PIXI stage
 var renderer; // PIXI renderer
+var game; // GAME 
 
 
-$( document ).ready(onDocumentLoaded);
+$(document).ready(onDocumentLoaded);
 
 function onDocumentLoaded()
 {
@@ -22,8 +23,8 @@ function setupProject()
 
 function onWindowResize(e)
 {
-	w = $(window).width();
-	h = $(window).height();
+	w = window.innerWidth;
+	h = window.innerHeight;
 	if(renderer != null)
 		renderer.resize(w,h);
 }
@@ -31,18 +32,19 @@ function onWindowResize(e)
 function setupPIXI()
 {
 	renderer = new PIXI.autoDetectRenderer(w, h);
-	stage = new PIXI.Stage(0x990000);
+	stage = new PIXI.Container();
 	document.body.appendChild(renderer.view);
 }
 
 function buildContent()
 {
-	
+	game = new GAME();
+	stage.addChild(game);
 }
 
 function programLoop()
 {
 	renderer.render(stage);
-	requestAnimFrame(programLoop);
+	requestAnimationFrame(programLoop);
 }
 
