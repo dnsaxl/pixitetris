@@ -2,7 +2,7 @@
 var w,h; // window width / height 
 var stage; // PIXI stage
 var renderer; // PIXI renderer
-var game; // GAME 
+var app; // APP 
 
 
 $(document).ready(onDocumentLoaded);
@@ -27,6 +27,8 @@ function onWindowResize(e)
 	h = window.innerHeight;
 	if(renderer != null)
 		renderer.resize(w,h);
+	if(app)
+		app.onResize();
 }
 
 function setupPIXI()
@@ -38,8 +40,9 @@ function setupPIXI()
 
 function buildContent()
 {
-	game = new GAME();
-	stage.addChild(game);
+	app = new APP();
+	app.build();
+	stage.addChild(app);
 }
 
 function programLoop()
