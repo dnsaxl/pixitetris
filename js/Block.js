@@ -147,4 +147,12 @@ var Z = [
 		[1,  ,  ]
 	]
 ];
+I.color = "block_cyan.png";
+J.color = "block_blue.png";
+L.color = "block_orange.png";
+Z.color = "block_red.png";
+S.color = "block_green.png";
+T.color = "block_purple.png";
+O.color = "block_yellow.png";
+
 var blockTypes = [I,J,L,Z,S,T,O];

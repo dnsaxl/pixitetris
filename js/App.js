@@ -10,23 +10,24 @@ APP.prototype.build = build;
 APP.prototype.menu = new Menu();
 APP.prototype.game = null; // lazy instantiation
 APP.prototype.onResize = onResize;
-
+APP.prototype.atlas = null;
+APP.prototype.texture = function(n) { return this.atlas ? this.atlas[n] : null };
 function build()
 {
 	loadAssets();
 }
 
+
 function loadAssets()
 {
-	//var assetsToLoad = ["assets/background.png"];
 	var loader = PIXI.loader;
-	loader.add("assets/background.png");
-	loader.once('complete',onAssetsLoaded);
-	loader.load();
+	loader.add(atlasURL);
+	loader.load(onAssetsLoaded);
 }
 
 function onAssetsLoaded()
 {
+	app.atlas = PIXI.loader.resources[atlasURL].textures;
 	buildMenu();
 }
 
@@ -74,6 +75,8 @@ function onUpArrow()
 {
 	if(app.menu && app.menu.parent)
 		app.menu.selectUp();
+	else if(app.game && app.game.parent)
+		app.game.rotateCurrentBlock();
 }
 
 function onRightArrow()

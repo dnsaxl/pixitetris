@@ -3,6 +3,7 @@ var w,h; // window width / height
 var stage; // PIXI stage
 var renderer; // PIXI renderer
 var app; // APP 
+var atlasURL = 'assets/atlas/spritesheet.json';
 
 
 $(document).ready(onDocumentLoaded);
