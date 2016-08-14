@@ -119,6 +119,41 @@ Game.prototype.processCompleteLines = function(a,g)
 			g[r][c] = null;
 		}
 	}
+	this.animateDropLines(a,g);
+}
+
+Game.prototype.animateDropLines = function(a,g)
+{
+	var max = Math.max.apply(null,a), nr = this.numRows, nc = this.numColumns;
+	var completed = false;
+	shiftArrays();
+	matchToArrays();
+	function animComplete()
+	{
+		if(completed) return;
+		completed = true;
+		app.game.newBlock();
+	}
+	function shiftArrays()
+	{
+		for(var i = a.length; i -->0;)
+			g.unshift(g.splice(a[i],1).pop());
+	}
+	function matchToArrays()	
+	{
+		var v,cell;
+		for(var r = 0; r <= max; r++)
+		{
+			v = r * celwid;
+			for(var c = nc; c-->0;)
+			{
+				cell = g[r][c];
+				if(!cell) continue;
+				TweenLite.to(cell, 0.4,{y : v, onComplete : animComplete});
+			}
+		}
+	}
+
 }
 
 Game.prototype.validateNewBlockPosition = function(offset,matrix)
@@ -171,13 +206,6 @@ Game.prototype.cementCurrentBlock = function()
 	this.currentBlock = null;
 }
 
-Game.prototype.isRowComplete = function(index)
-{
-	for(var i = this.numColumns; i--> 0;)
-		if(!this.grid[index][i])
-			return false;
-	return true;
-}
 
 Block = function()
 {
