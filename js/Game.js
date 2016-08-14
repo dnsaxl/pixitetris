@@ -48,35 +48,38 @@ Game.prototype.newBlock = function()
 Game.prototype.rotateCurrentBlock = function()
 {
 	if(!this.currentBlock) return;
-	var canMove = this.validateNewBlockPosition(null,null,this.currentBlock.nextMatrix());
+	var canMove = this.validateNewBlockPosition(null,this.currentBlock.nextMatrix());
 	console.log("rotate blick", this.currentBlock.id);
 	if(canMove) this.currentBlock.rotate();
 }
 Game.prototype.moveLeftCurrentBlock = function()
 {
 	if(!this.currentBlock) return;
-	var canMove = this.validateNewBlockPosition(null,{x:-1});
+	var canMove = this.validateNewBlockPosition({x:-1});
 	if(canMove) this.currentBlock.moveHor(-1);
 }
 Game.prototype.moveRightCurrentBlock = function()
 {
 	if(!this.currentBlock) return;
-	var canMove = this.validateNewBlockPosition(null,{x:1});
+	var canMove = this.validateNewBlockPosition({x:1});
 	if(canMove) this.currentBlock.moveHor(1);
 }
 Game.prototype.moveDownCurrentBlock = function()
 {
 	if(!this.currentBlock) return;
-	var canMove = this.validateNewBlockPosition(null,{y:1});
+	var canMove = this.validateNewBlockPosition({y:1});
 	if(canMove) 
 		this.currentBlock.moveVer(1);
 	else
+	{
+		this.cementCurrentBlock();
 		this.newBlock();
+	}
 }
 
-Game.prototype.validateNewBlockPosition = function(block,offset,matrix)
+Game.prototype.validateNewBlockPosition = function(offset,matrix)
 {
-	block = block || this.currentBlock;
+	block = this.currentBlock;
 	offsetx = block.offset.x + (offset && offset.x ? offset.x : 0);
 	offsety = block.offset.y + (offset && offset.y ? offset.y : 0);
 	matrix = matrix || block.matrix;
@@ -92,12 +95,30 @@ Game.prototype.validateNewBlockPosition = function(block,offset,matrix)
 		{
 			if(!r[j]) continue;
 			dx = offsetx + j;
-			if(dx < 0 || dx > mh || dy > mv)
+			if(dx < 0 || dx > mh || dy > mv || g[dx][dy])
 				return false;
 		}
 	}
 
 	return true;
+}
+Game.prototype.cementCurrentBlock = function()
+{
+	var b = this.currentBlock, g = this.grid;
+	var bx = b.offset.x, by = b.offset.y, m = b.matrix;
+	var h = m.length,w,r;
+	for(var i = 0; i < h; i++)
+	{
+		r = m[i];
+		w = r.length;
+		dy = by + i;
+		for(var j = 0; j < w; j++)
+		{
+			if(!r[j]) continue;
+			dx = bx + j;
+			g[dx][dy] = b.cells.pop();
+		}
+	}
 }
 
 Game.prototype.isRowComplete = function(index)
