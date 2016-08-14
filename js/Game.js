@@ -1,7 +1,7 @@
 Game = function()
 {    
 	PIXI.Container.call( this );
-	this.buildGrid(this.numColumns,this.numRows);
+	this.buildGrid(this.numRows,this.numColumns);
 }
 
 Game.prototype = Object.create(PIXI.Container.prototype);
@@ -13,7 +13,8 @@ Game.prototype.bgGrid = null;
 Game.prototype.grid = null;
 Game.prototype.currentBlock = null;
 Game.prototype.numBlocks = 0;
-Game.prototype.buildGrid = function(c,r)
+
+Game.prototype.buildGrid = function(r,c)
 {
 	var texture = app.texture('background.png');	
 	var gridwid = texture.crop.width * c;
@@ -24,12 +25,12 @@ Game.prototype.buildGrid = function(c,r)
 	this.addChild(this.bgGrid);
 
 	this.grid = [];
-	for(var i = c; i--> 0;)
+	for(var i = r; i--> 0;)
 	{
-		var column = [];	
-		for(var j = r; j--> 0;)
-			column.push(null);
-		this.grid.push(column);
+		var row = [];	
+		for(var j = c; j--> 0;)
+			row.push(null);
+		this.grid.push(row);
 	}
 }
 Game.prototype.start = function()
@@ -86,7 +87,7 @@ Game.prototype.validateCompleteLines = function ()
 		line = true;
 		for(var c = nc; c-->0;)
 		{
-			if(!g[c][r])
+			if(!g[r][c])
 			{
 				line = false;
 				break;
@@ -105,17 +106,17 @@ Game.prototype.validateCompleteLines = function ()
 }
 Game.prototype.processCompleteLines = function(a,g)
 {
-	var al = a.length, gl = g.length,c,r;
+	var al = a.length, nc = this.numColumns,cell,r;
 	for(var i = al; i-->0;)
 	{
 		r = a[i];
-		console.log("row to shift",r);
-		for(var j = gl; j-->0;)
+		console.log("row to shift",r,g[r]);
+		for(var c = nc; c-->0;)
 		{
-			c = g[j][r];
-			console.log('cell to shift', c);
-			if(c.parent)
-				c.parent.removeChild(c);
+			cell = g[r][c];
+			if(cell.parent)
+				cell.parent.removeChild(cell);
+			g[r][c] = null;
 		}
 	}
 }
@@ -138,7 +139,7 @@ Game.prototype.validateNewBlockPosition = function(offset,matrix)
 		{
 			if(!r[j]) continue;
 			dx = bx + j;
-			if(dx < 0 || dx > mh || dy > mv || g[dx][dy])
+			if(dx < 0 || dx > mh || dy > mv || g[dy][dx])
 				return false;
 		}
 	}
@@ -160,7 +161,7 @@ Game.prototype.cementCurrentBlock = function()
 			if(!r[j]) continue;
 			cell = cm[i][j];
 			dx = bx + j;
-			g[dx][dy] = cell;
+			g[dy][dx] = cell;
 			cell.x = celwid * dx;
 			cell.y = celwid * dy;
 			this.bgGrid.addChild(cm[i][j]);
@@ -173,7 +174,7 @@ Game.prototype.cementCurrentBlock = function()
 Game.prototype.isRowComplete = function(index)
 {
 	for(var i = this.numColumns; i--> 0;)
-		if(!this.grid[i][index])
+		if(!this.grid[index][i])
 			return false;
 	return true;
 }

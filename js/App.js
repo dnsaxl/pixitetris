@@ -107,20 +107,19 @@ function onMenuStart()
 {
 	if(app.menu.parent)
 	{
-		app.menu.parent.removeChild(app.menu);
+		animatedRemove(app.menu)
 		if(!app.game)
 			app.game = new Game(); // lazy instantiation for faster initial load
 		positionGame();
 		if(!app.game.parent)
-			app.addChild(app.game);
+			animatedAdd(app.game)
 		app.game.start();
 	}
 }
 
 function onMenuCredits()
 {
-	if(app.menu.parent)
-		app.menu.parent.removeChild(app.menu);
+	animatedRemove(app.menu);
 }
 
 function onResize()
@@ -144,6 +143,24 @@ function positionGame()
 	app.game.x = (w - app.game.width) / 2;
 	app.game.y = (h - app.game.height) / 2;
 }
+
+//----------------------- HELPERS ------------------------ //
+function animatedRemove(t)
+{
+	function remove()
+	{
+		if(t.parent)
+			t.parent.removeChild(t);
+	}
+	TweenLite.to(t, 0.4, {y:h, onComplete : remove});
+}
+
+function animatedAdd(t)
+{
+	app.addChild(t);
+	TweenLite.from(t, 0.4, {y:-t.height});
+}
+
 
 function resolveSize(movable, static)
 {
