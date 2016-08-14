@@ -68,7 +68,8 @@ function onKeyDown(e)
 
 function onLeftArrow()
 {
-
+	if(app.game && app.game.parent)
+		app.game.moveLeftCurrentBlock();
 }
 
 function onUpArrow()
@@ -81,13 +82,16 @@ function onUpArrow()
 
 function onRightArrow()
 {
-
+	if(app.game && app.game.parent)
+		app.game.moveRightCurrentBlock();
 }
 
 function onDownArrow()
 {
 	if(app.menu && app.menu.parent)
 		app.menu.selectDown();
+	else if(app.game && app.game.parent)
+		app.game.moveDownCurrentBlock();
 }
 
 function onEnterKey()

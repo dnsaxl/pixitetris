@@ -28,6 +28,7 @@ Game.prototype.numRows = 20;
 Game.prototype.bgGrid = null;
 Game.prototype.grid = null;
 Game.prototype.currentBlock = null;
+
 Game.prototype.newBlock = function()
 {
 	this.currentBlock = new Block();
@@ -37,6 +38,19 @@ Game.prototype.rotateCurrentBlock = function()
 {
 	this.currentBlock  ? this.currentBlock.rotate() : null;
 }
+Game.prototype.moveLeftCurrentBlock = function()
+{
+	this.currentBlock ? this.currentBlock.moveHor(-1) : null;
+}
+Game.prototype.moveRightCurrentBlock = function()
+{
+	this.currentBlock ? this.currentBlock.moveHor(1) : null;
+}
+Game.prototype.moveDownCurrentBlock = function()
+{
+	this.currentBlock ? this.currentBlock.moveVer(1) : null;
+}
+
 Game.prototype.isRowComplete = function(index)
 {
 	for(var i = this.numColumns; i--> 0;)
@@ -73,6 +87,17 @@ Block.prototype.rotIndex = 0;
 Block.prototype.len = 0;
 Block.prototype.matrix = [];
 Block.prototype.cells =[];
+Block.prototype.offset = {x:0,y:0};
+Block.prototype.moveHor = function(v)
+{
+	this.offset.x += v;
+	this.x = this.offset.x * celwid;
+}
+Block.prototype.moveVer = function(v)
+{
+	this.offset.y += v;
+	this.y = this.offset.y * celwid;
+}
 Block.prototype.redistribute = function()
 {
 	var v,c,ci=0;
