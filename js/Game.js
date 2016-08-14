@@ -1,25 +1,9 @@
 Game = function()
 {    
 	PIXI.Container.call( this );
-	var texture = app.texture('background.png');	
-	var gridwid =  texture.crop.width * this.numColumns;
-	var gridhei = texture.crop.height * this.numRows;
-	celwid = texture.crop.width;
-
-	this.bgGrid = new PIXI.extras.TilingSprite(texture, gridwid,gridhei);
-	this.addChild(this.bgGrid);
-
-	this.grid = [];
-	for(var i = this.numColumns; i--> 0;)
-	{
-		var column = [];	
-		for(var j = this.numRows; j--> 0;)
-			column.push(null);
-		this.grid.push(column);
-	}
+	this.buildGrid(this.numColumns,this.numRows);
 	this.newBlock();
 }
-
 Game.prototype = Object.create(PIXI.Container.prototype);
 Game.prototype.constructor = Game;
 Game.prototype.started = false;
@@ -28,6 +12,25 @@ Game.prototype.numRows = 20;
 Game.prototype.bgGrid = null;
 Game.prototype.grid = null;
 Game.prototype.currentBlock = null;
+Game.prototype.buildGrid = function(c,r)
+{
+	var texture = app.texture('background.png');	
+	var gridwid = texture.crop.width * c;
+	var gridhei = texture.crop.height * r;
+	celwid = texture.crop.width;
+
+	this.bgGrid = new PIXI.extras.TilingSprite(texture, gridwid,gridhei);
+	this.addChild(this.bgGrid);
+
+	this.grid = [];
+	for(var i = c; i--> 0;)
+	{
+		var column = [];	
+		for(var j = r; j--> 0;)
+			column.push(null);
+		this.grid.push(column);
+	}
+}
 
 Game.prototype.newBlock = function()
 {
@@ -36,19 +39,55 @@ Game.prototype.newBlock = function()
 }
 Game.prototype.rotateCurrentBlock = function()
 {
-	this.currentBlock  ? this.currentBlock.rotate() : null;
+	if(!this.currentBlock) return;
+	var canMove = this.validateNewBlockPosition(null,null,this.currentBlock.nextMatrix());
+	if(canMove) this.currentBlock.rotate();
 }
 Game.prototype.moveLeftCurrentBlock = function()
 {
-	this.currentBlock ? this.currentBlock.moveHor(-1) : null;
+	if(!this.currentBlock) return;
+	var canMove = this.validateNewBlockPosition(null,{x:-1});
+	if(canMove) this.currentBlock.moveHor(-1);
 }
 Game.prototype.moveRightCurrentBlock = function()
 {
-	this.currentBlock ? this.currentBlock.moveHor(1) : null;
+	if(!this.currentBlock) return;
+	var canMove = this.validateNewBlockPosition(null,{x:1});
+	if(canMove) this.currentBlock.moveHor(1);
 }
 Game.prototype.moveDownCurrentBlock = function()
 {
-	this.currentBlock ? this.currentBlock.moveVer(1) : null;
+	if(!this.currentBlock) return;
+	var canMove = this.validateNewBlockPosition(null,{y:1});
+	if(canMove) 
+		this.currentBlock.moveVer(1);
+	else
+		this.newBlock();
+}
+
+Game.prototype.validateNewBlockPosition = function(block,offset,matrix)
+{
+	block = block || this.currentBlock;
+	offsetx = block.offset.x + (offset && offset.x ? offset.x : 0);
+	offsety = block.offset.y + (offset && offset.y ? offset.y : 0);
+	matrix = matrix || block.matrix;
+	var h = matrix.length, mh = this.numColumns-1, mv = this.numRows-1, w,r,dx,dy;
+	var g = this.grid;
+	for(var i = 0; i < h; i++)
+	{
+		r = matrix[i];
+		w = r.length;
+		dy = offsety + i;
+		for(var j = 0; j < w; j++)
+		{
+			if(!r[j]) continue;
+			dx = offsetx + j;
+			if(dx < 0 || dx > mh || dy > mv)
+				return false;
+		}
+	}
+
+	return true;
 }
 
 Game.prototype.isRowComplete = function(index)
@@ -80,7 +119,6 @@ Block = function()
 	}
 	this.redistribute();
 }
-
 Block.prototype = Object.create(PIXI.Container.prototype);
 Block.prototype.type = null;
 Block.prototype.rotIndex = 0;
@@ -88,6 +126,10 @@ Block.prototype.len = 0;
 Block.prototype.matrix = [];
 Block.prototype.cells =[];
 Block.prototype.offset = {x:0,y:0};
+Block.prototype.nextMatrix = function(v)
+{
+	return this.type[(this.rotIndex + (v?v:1)) % this.type.length];
+}
 Block.prototype.moveHor = function(v)
 {
 	this.offset.x += v;
@@ -121,6 +163,3 @@ Block.prototype.rotate = function()
 	this.matrix = this.type[this.rotIndex % this.type.length];
 	this.redistribute();
 }
-
- function rad2deg(rad) { return rad * 180/Math.PI};
- function deg2rad(deg) { return deg / 180.0 * Math.PI };
