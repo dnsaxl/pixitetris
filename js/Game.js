@@ -51,7 +51,6 @@ Block = function()
 	this.typeId = Math.floor(Math.random() * blockTypes.length);
 	this.type = blockTypes[this.typeId];
 	this.matrix = this.type[this.rotIndex];
-	this.rotate();
 	this.len = this.matrix.length;
 	var v;
 	for(var i = 0, l = this.len; i < l; i++)
@@ -61,25 +60,41 @@ Block = function()
 			v = this.matrix[i][j];
 			if(!v) continue;
 			v = new PIXI.Sprite(app.texture(this.type.color));
-			v.x = celwid * j;
-			v.y = celwid * i;
+			this.cells.push(v);
 			this.addChild(v);
 		}
 	}
-	
+	this.redistribute();
 }
 
 Block.prototype = Object.create(PIXI.Container.prototype);
 Block.prototype.type = null;
-Block.prototype.rotIndex = -1;
+Block.prototype.rotIndex = 0;
 Block.prototype.len = 0;
 Block.prototype.matrix = [];
+Block.prototype.cells =[];
+Block.prototype.redistribute = function()
+{
+	var v,c,ci=0;
+	for(var i = 0, l = this.len; i < l; i++)
+	{
+		for(var j = 0, k = this.len; j < k; j++)
+		{
+			v = this.matrix[i][j];
+			if(!v) continue;
+			c = this.cells[ci++];
+			c.x = celwid * j;
+			c.y = celwid * i;
+		}
+
+	}
+}
 
 Block.prototype.rotate = function()
 {
 	this.rotIndex +=1;
 	this.matrix = this.type[this.rotIndex % this.type.length];
-	this.rotation += deg2rad(90);
+	this.redistribute();
 }
 
  function rad2deg(rad) { return rad * 180/Math.PI};
