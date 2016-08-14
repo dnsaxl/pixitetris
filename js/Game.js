@@ -73,28 +73,71 @@ Game.prototype.moveDownCurrentBlock = function()
 	else
 	{
 		this.cementCurrentBlock();
+		this.validateCompleteLines();
+	}
+}
+
+Game.prototype.validateCompleteLines = function ()
+{
+	var g = this.grid, nr = this.numRows, nc = this.numColumns, line;
+	var rowsToShift = [];
+	for(var r = nr; r-->0;)
+	{
+		line = true;
+		for(var c = nc; c-->0;)
+		{
+			if(!g[c][r])
+			{
+				line = false;
+				break;
+			}
+		}
+		if(line)
+			rowsToShift.push(r);
+	}
+	console.log("rowsToShift", rowsToShift);
+	if(rowsToShift.length < 1)
 		this.newBlock();
+	else
+	{
+		this.processCompleteLines(rowsToShift,g);
+	}
+}
+Game.prototype.processCompleteLines = function(a,g)
+{
+	var al = a.length, gl = g.length,c,r;
+	for(var i = al; i-->0;)
+	{
+		r = a[i];
+		console.log("row to shift",r);
+		for(var j = gl; j-->0;)
+		{
+			c = g[j][r];
+			console.log('cell to shift', c);
+			if(c.parent)
+				c.parent.removeChild(c);
+		}
 	}
 }
 
 Game.prototype.validateNewBlockPosition = function(offset,matrix)
 {
 	block = this.currentBlock;
-	offsetx = block.offset.x + (offset && offset.x ? offset.x : 0);
-	offsety = block.offset.y + (offset && offset.y ? offset.y : 0);
+	if(!block) return false;
+	bx = block.offset.x + (offset && offset.x ? offset.x : 0);
+	by = block.offset.y + (offset && offset.y ? offset.y : 0);
 	matrix = matrix || block.matrix;
 	var h = matrix.length, mh = this.numColumns-1, mv = this.numRows-1, w,r,dx,dy;
 	var g = this.grid;
-	console.log('validate', block.id, block.offset.x, block.offset.y, '|', offsetx, offsety, matrix);
 	for(var i = 0; i < h; i++)
 	{
 		r = matrix[i];
 		w = r.length;
-		dy = offsety + i;
+		dy = by + i;
 		for(var j = 0; j < w; j++)
 		{
 			if(!r[j]) continue;
-			dx = offsetx + j;
+			dx = bx + j;
 			if(dx < 0 || dx > mh || dy > mv || g[dx][dy])
 				return false;
 		}
@@ -105,8 +148,8 @@ Game.prototype.validateNewBlockPosition = function(offset,matrix)
 Game.prototype.cementCurrentBlock = function()
 {
 	var b = this.currentBlock, g = this.grid;
-	var bx = b.offset.x, by = b.offset.y, m = b.matrix;
-	var h = m.length,w,r;
+	var bx = b.offset.x, by = b.offset.y, m = b.matrix, cm = b.cellsMatrix;
+	var h = m.length,w,r,cell;
 	for(var i = 0; i < h; i++)
 	{
 		r = m[i];
@@ -115,10 +158,16 @@ Game.prototype.cementCurrentBlock = function()
 		for(var j = 0; j < w; j++)
 		{
 			if(!r[j]) continue;
+			cell = cm[i][j];
 			dx = bx + j;
-			g[dx][dy] = b.cells.pop();
+			g[dx][dy] = cell;
+			cell.x = celwid * dx;
+			cell.y = celwid * dy;
+			this.bgGrid.addChild(cm[i][j]);
 		}
 	}
+	b.destroy();
+	this.currentBlock = null;
 }
 
 Game.prototype.isRowComplete = function(index)
@@ -139,17 +188,20 @@ Block = function()
 	this.matrix = this.type[this.rotIndex];
 	this.len = this.matrix.length;
 	this.cells = [];
+	this.cellsMatrix = [];
 	this.offset = {x:0,y:0};
 
 	var v;
 	for(var i = 0, l = this.len; i < l; i++)
 	{
+		this.cellsMatrix[i] = [];
 		for(var j = 0, k = this.len; j < k; j++)
 		{
 			v = this.matrix[i][j];
 			if(!v) continue;
 			v = new PIXI.Sprite(app.texture(this.type.color));
 			this.cells.push(v);
+			this.cellsMatrix[i][j] = v;
 			this.addChild(v);
 		}
 	}
@@ -157,6 +209,19 @@ Block = function()
 	console.log("block created", this.id, this.offset.x, this.offset.y);
 }
 Block.prototype = Object.create(PIXI.Container.prototype);
+Block.prototype.destroy = function()
+{
+	while(this.cells.length)
+		this.cells.pop();
+	while(this.cellsMatrix.length)
+	{
+		while(this.cellsMatrix[0].length)
+			this.cellsMatrix[0].pop();
+		this.cellsMatrix.shift();
+	}
+	this.id = this.typeId = this.rotIndex = 0;
+	this.type = this.matrix = this.offset = this.len = this.cellsMatrix = this.cells = null;
+}
 Block.prototype.nextMatrix = function(v)
 {
 	return this.type[(this.rotIndex + (v?v:1)) % this.type.length];
@@ -176,11 +241,13 @@ Block.prototype.redistribute = function()
 	var v,c,ci=0;
 	for(var i = 0, l = this.len; i < l; i++)
 	{
+		this.cellsMatrix[i] = [];
 		for(var j = 0, k = this.len; j < k; j++)
 		{
 			v = this.matrix[i][j];
 			if(!v) continue;
 			c = this.cells[ci++];
+			this.cellsMatrix[i][j] = c;
 			c.x = celwid * j;
 			c.y = celwid * i;
 		}
