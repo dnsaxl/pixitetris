@@ -2,8 +2,8 @@ Game = function()
 {    
 	PIXI.Container.call( this );
 	this.buildGrid(this.numColumns,this.numRows);
-	this.newBlock();
 }
+
 Game.prototype = Object.create(PIXI.Container.prototype);
 Game.prototype.constructor = Game;
 Game.prototype.started = false;
@@ -12,6 +12,7 @@ Game.prototype.numRows = 20;
 Game.prototype.bgGrid = null;
 Game.prototype.grid = null;
 Game.prototype.currentBlock = null;
+Game.prototype.numBlocks = 0;
 Game.prototype.buildGrid = function(c,r)
 {
 	var texture = app.texture('background.png');	
@@ -31,9 +32,16 @@ Game.prototype.buildGrid = function(c,r)
 		this.grid.push(column);
 	}
 }
+Game.prototype.start = function()
+{
+	if(this.started) return;
+	this.started = true;
+	this.newBlock();
+}
 
 Game.prototype.newBlock = function()
 {
+	this.currentBlock = null;
 	this.currentBlock = new Block();
 	this.addChild(this.currentBlock);
 }
@@ -41,6 +49,7 @@ Game.prototype.rotateCurrentBlock = function()
 {
 	if(!this.currentBlock) return;
 	var canMove = this.validateNewBlockPosition(null,null,this.currentBlock.nextMatrix());
+	console.log("rotate blick", this.currentBlock.id);
 	if(canMove) this.currentBlock.rotate();
 }
 Game.prototype.moveLeftCurrentBlock = function()
@@ -73,6 +82,7 @@ Game.prototype.validateNewBlockPosition = function(block,offset,matrix)
 	matrix = matrix || block.matrix;
 	var h = matrix.length, mh = this.numColumns-1, mv = this.numRows-1, w,r,dx,dy;
 	var g = this.grid;
+	console.log('validate', block.id, block.offset.x, block.offset.y, '|', offsetx, offsety, matrix);
 	for(var i = 0; i < h; i++)
 	{
 		r = matrix[i];
@@ -101,10 +111,15 @@ Game.prototype.isRowComplete = function(index)
 Block = function()
 {
 	PIXI.Container.call( this );
+	this.id = app.game.numBlocks++;
 	this.typeId = Math.floor(Math.random() * blockTypes.length);
 	this.type = blockTypes[this.typeId];
+	this.rotIndex = 0;
 	this.matrix = this.type[this.rotIndex];
 	this.len = this.matrix.length;
+	this.cells = [];
+	this.offset = {x:0,y:0};
+
 	var v;
 	for(var i = 0, l = this.len; i < l; i++)
 	{
@@ -118,14 +133,9 @@ Block = function()
 		}
 	}
 	this.redistribute();
+	console.log("block created", this.id, this.offset.x, this.offset.y);
 }
 Block.prototype = Object.create(PIXI.Container.prototype);
-Block.prototype.type = null;
-Block.prototype.rotIndex = 0;
-Block.prototype.len = 0;
-Block.prototype.matrix = [];
-Block.prototype.cells =[];
-Block.prototype.offset = {x:0,y:0};
 Block.prototype.nextMatrix = function(v)
 {
 	return this.type[(this.rotIndex + (v?v:1)) % this.type.length];
@@ -153,8 +163,8 @@ Block.prototype.redistribute = function()
 			c.x = celwid * j;
 			c.y = celwid * i;
 		}
-
 	}
+	console.log("REDISTRIBUTE", this.id);
 }
 
 Block.prototype.rotate = function()

@@ -113,6 +113,7 @@ function onMenuStart()
 		positionGame();
 		if(!app.game.parent)
 			app.addChild(app.game);
+		app.game.start();
 	}
 }
 
