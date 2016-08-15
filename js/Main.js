@@ -13,13 +13,33 @@ function onDocumentLoaded()
 	setupProject();
 	setupPIXI();
 	buildContent();
-	programLoop();
 }
 
 function setupProject()
 {
 	onWindowResize();
 	window.addEventListener("resize", onWindowResize);
+}
+
+function setupPIXI()
+{
+	renderer = new PIXI.autoDetectRenderer(w, h);
+	stage = new PIXI.Container();
+	document.body.appendChild(renderer.view);
+	programLoop();
+}
+
+function programLoop()
+{
+	renderer.render(stage);
+	requestAnimationFrame(programLoop);
+}
+
+function buildContent()
+{
+	app = new APP();
+	app.build();
+	stage.addChild(app);
 }
 
 function onWindowResize(e)
@@ -31,24 +51,3 @@ function onWindowResize(e)
 	if(app)
 		app.onResize();
 }
-
-function setupPIXI()
-{
-	renderer = new PIXI.autoDetectRenderer(w, h);
-	stage = new PIXI.Container();
-	document.body.appendChild(renderer.view);
-}
-
-function buildContent()
-{
-	app = new APP();
-	app.build();
-	stage.addChild(app);
-}
-
-function programLoop()
-{
-	renderer.render(stage);
-	requestAnimationFrame(programLoop);
-}
-

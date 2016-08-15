@@ -1,27 +1,41 @@
+//---------------------- CONSTRUCTOR SECTION --------------------- */
 Game = function()
 {    
-	PIXI.Container.call( this );
+	PIXI.Container.call(this);
+	this.points = 0;
 	this.buildGrid(this.numRows,this.numColumns);
+	this.buildTop();
+	this.buildPoints();
 }
 
 Game.prototype = Object.create(PIXI.Container.prototype);
 Game.prototype.constructor = Game;
-Game.prototype.started = false;
+Game.prototype.isStarted = false;
+Game.prototype.isPaused = false;
 Game.prototype.numColumns = 10;
 Game.prototype.numRows = 20;
 Game.prototype.bgGrid = null;
 Game.prototype.grid = null;
 Game.prototype.currentBlock = null;
 Game.prototype.numBlocks = 0;
+Game.prototype.points = 0;
+Game.prototype.speedPoints = 0;
+Game.prototype.pointsForLine = 10;
+Game.prototype.tickInterval = 500;
+Game.prototype.intervalId = 0;
+
+//---------------------- CONSTRUCTOR SECTION --------------------- */
+//---------------------- BUILD SECTION --------------------- */
 
 Game.prototype.buildGrid = function(r,c)
 {
-	var texture = app.texture('background.png');	
-	var gridwid = texture.crop.width * c;
-	var gridhei = texture.crop.height * r;
-	celwid = texture.crop.width;
+	var texture = app.texture('background.png');
+	celwid = texture.crop.width;	
+	gridwid = celwid * c;
+	gridhei = celwid * r;
 
 	this.bgGrid = new PIXI.extras.TilingSprite(texture, gridwid,gridhei);
+	this.bgGrid.y = celwid *2;
 	this.addChild(this.bgGrid);
 
 	this.grid = [];
@@ -33,127 +47,145 @@ Game.prototype.buildGrid = function(r,c)
 		this.grid.push(row);
 	}
 }
+
+Game.prototype.buildTop = function()
+{
+	var topbar= new PIXI.Graphics();
+	topbar.beginFill(0,0);
+	topbar.drawRect(0, 0, gridwid, celwid *2);
+	this.addChild(topbar);
+}
+
+Game.prototype.buildPoints = function()
+{
+	var stylePoints =  {font:"16px Arial", fill:"white", align:"left"};
+	var styleSpeedPoints = {font:"16px Arial", fill:"white", align:"right"};
+
+	this.tfPoints = new PIXI.Text("", stylePoints);
+	this.tfSpeedPoints = new PIXI.Text("",styleSpeedPoints);
+	this.tfSpeedPoints.anchor.x = 1;
+	this.tfSpeedPoints.x = this.bgGrid.width;
+
+	this.addChild(this.tfPoints);
+	this.addChild(this.tfSpeedPoints);
+	this.updatePoints();
+}
+
+//---------------------- BUILD SECTION --------------------- */
+//------------------- MECHANIC END POINTS ------------------ */
+
 Game.prototype.start = function()
 {
-	if(this.started) return;
-	this.started = true;
+	if(this.isStarted)
+	{
+		this.restart();
+		return;
+	}
+	this.isStarted = true;
 	this.newBlock();
+	this.updatePoints();
+	this.updateSpeedPoints();
+	this.intervalId = setInterval(this.tick,this.tickInterval);
 }
+
+Game.prototype.restart = function()
+{
+	this.points = this.speedPoints = this.numBlocks = 0;
+	this.bgGrid.removeChildren();
+	g = this.grid;
+	for(var r = this.numRows; r-->0;)
+		for(var c = this.numColumns; c-->0;)
+			g[r][c] = null;
+	this.isStarted = this.isPaused = false;
+	clearInterval(this.intervalId);
+	this.start();
+}
+
+Game.prototype.pause = function()
+{
+	this.isPaused = true;
+	clearInterval(this.intervalId);
+}
+
+Game.prototype.resume = function()
+{
+	this.isPaused = false;
+	this.intervalId = setInterval(this.tick,this.tickInterval);
+}
+
+Game.prototype.gameOverSequence = function()
+{
+	this.currentBlock = null;
+	clearInterval(this.intervalId);
+	if(this.onGameOver != null)
+		this.onGameOver();
+}
+Game.prototype.tick = function()
+{
+	app.game.moveDownCurrentBlock(false);
+}
+
+//------------------- MECHANIC END POINTS ------------------ */
+//------------------- BLOCKS MANIPULATION ------------------ */
 
 Game.prototype.newBlock = function()
 {
 	this.currentBlock = null;
 	this.currentBlock = new Block();
-	this.addChild(this.currentBlock);
+	this.currentBlock.moveHor(4); // initial pos;
+	this.currentBlock.moveVer(-1); // initial pos;
+	this.speedPoints = 0;
+	this.updateSpeedPoints();
+	this.bgGrid.addChild(this.currentBlock);
+
+	var canPlace = this.validateNewBlockPosition();
+	if(!canPlace)
+		this.gameOverSequence();
 }
+
 Game.prototype.rotateCurrentBlock = function()
 {
 	if(!this.currentBlock) return;
 	var canMove = this.validateNewBlockPosition(null,this.currentBlock.nextMatrix());
-	console.log("rotate blick", this.currentBlock.id);
 	if(canMove) this.currentBlock.rotate();
 }
+
 Game.prototype.moveLeftCurrentBlock = function()
 {
 	if(!this.currentBlock) return;
 	var canMove = this.validateNewBlockPosition({x:-1});
 	if(canMove) this.currentBlock.moveHor(-1);
 }
+
 Game.prototype.moveRightCurrentBlock = function()
 {
 	if(!this.currentBlock) return;
 	var canMove = this.validateNewBlockPosition({x:1});
 	if(canMove) this.currentBlock.moveHor(1);
 }
-Game.prototype.moveDownCurrentBlock = function()
+
+Game.prototype.moveDownCurrentBlock = function(key)
 {
 	if(!this.currentBlock) return;
 	var canMove = this.validateNewBlockPosition({y:1});
 	if(canMove) 
+	{
+		if(key)
+		{
+			this.speedPoints += 1;
+			this.updateSpeedPoints();
+		}
+		
 		this.currentBlock.moveVer(1);
+	}
 	else
 	{
-		this.cementCurrentBlock();
-		this.validateCompleteLines();
+		var success = this.cementCurrentBlock();
+		if(success)
+			this.lookForCompletedLines();
+		else
+			this.gameOverSequence();
 	}
-}
-
-Game.prototype.validateCompleteLines = function ()
-{
-	var g = this.grid, nr = this.numRows, nc = this.numColumns, line;
-	var rowsToShift = [];
-	for(var r = nr; r-->0;)
-	{
-		line = true;
-		for(var c = nc; c-->0;)
-		{
-			if(!g[r][c])
-			{
-				line = false;
-				break;
-			}
-		}
-		if(line)
-			rowsToShift.push(r);
-	}
-	console.log("rowsToShift", rowsToShift);
-	if(rowsToShift.length < 1)
-		this.newBlock();
-	else
-	{
-		this.processCompleteLines(rowsToShift,g);
-	}
-}
-Game.prototype.processCompleteLines = function(a,g)
-{
-	var al = a.length, nc = this.numColumns,cell,r;
-	for(var i = al; i-->0;)
-	{
-		r = a[i];
-		console.log("row to shift",r,g[r]);
-		for(var c = nc; c-->0;)
-		{
-			cell = g[r][c];
-			if(cell.parent)
-				cell.parent.removeChild(cell);
-			g[r][c] = null;
-		}
-	}
-	this.animateDropLines(a,g);
-}
-
-Game.prototype.animateDropLines = function(a,g)
-{
-	var max = Math.max.apply(null,a), nr = this.numRows, nc = this.numColumns;
-	var completed = false;
-	shiftArrays();
-	matchToArrays();
-	function animComplete()
-	{
-		if(completed) return;
-		completed = true;
-		app.game.newBlock();
-	}
-	function shiftArrays()
-	{
-		for(var i = a.length; i -->0;)
-			g.unshift(g.splice(a[i],1).pop());
-	}
-	function matchToArrays()	
-	{
-		var v,cell;
-		for(var r = 0; r <= max; r++)
-		{
-			v = r * celwid;
-			for(var c = nc; c-->0;)
-			{
-				cell = g[r][c];
-				if(!cell) continue;
-				TweenLite.to(cell, 0.4,{y : v, onComplete : animComplete});
-			}
-		}
-	}
-
 }
 
 Game.prototype.validateNewBlockPosition = function(offset,matrix)
@@ -174,18 +206,19 @@ Game.prototype.validateNewBlockPosition = function(offset,matrix)
 		{
 			if(!r[j]) continue;
 			dx = bx + j;
-			if(dx < 0 || dx > mh || dy > mv || g[dy][dx])
+			if(dx < 0 || dx > mh || dy > mv || (dy > -1 && g[dy][dx]))
 				return false;
 		}
 	}
-
 	return true;
 }
+
 Game.prototype.cementCurrentBlock = function()
 {
 	var b = this.currentBlock, g = this.grid;
 	var bx = b.offset.x, by = b.offset.y, m = b.matrix, cm = b.cellsMatrix;
 	var h = m.length,w,r,cell;
+	var success = true;
 	for(var i = 0; i < h; i++)
 	{
 		r = m[i];
@@ -196,7 +229,10 @@ Game.prototype.cementCurrentBlock = function()
 			if(!r[j]) continue;
 			cell = cm[i][j];
 			dx = bx + j;
-			g[dy][dx] = cell;
+			if(dy < 0)
+				success = false;
+			else
+				g[dy][dx] = cell;
 			cell.x = celwid * dx;
 			cell.y = celwid * dy;
 			this.bgGrid.addChild(cm[i][j]);
@@ -204,89 +240,98 @@ Game.prototype.cementCurrentBlock = function()
 	}
 	b.destroy();
 	this.currentBlock = null;
+	return success;
 }
 
+//------------------- BLOCKS MANIPULATION ------------------ */
+//-------------------- LINES DROP LOGIC ------------------- */
 
-Block = function()
+Game.prototype.lookForCompletedLines = function()
 {
-	PIXI.Container.call( this );
-	this.id = app.game.numBlocks++;
-	this.typeId = Math.floor(Math.random() * blockTypes.length);
-	this.type = blockTypes[this.typeId];
-	this.rotIndex = 0;
-	this.matrix = this.type[this.rotIndex];
-	this.len = this.matrix.length;
-	this.cells = [];
-	this.cellsMatrix = [];
-	this.offset = {x:0,y:0};
-
-	var v;
-	for(var i = 0, l = this.len; i < l; i++)
+	var g = this.grid, nr = this.numRows, nc = this.numColumns, line;
+	var completedLines = [];
+	for(var r = nr; r-->0;)
 	{
-		this.cellsMatrix[i] = [];
-		for(var j = 0, k = this.len; j < k; j++)
+		line = true;
+		for(var c = nc; c-->0;)
 		{
-			v = this.matrix[i][j];
-			if(!v) continue;
-			v = new PIXI.Sprite(app.texture(this.type.color));
-			this.cells.push(v);
-			this.cellsMatrix[i][j] = v;
-			this.addChild(v);
+			if(!g[r][c])
+			{
+				line = false;
+				break;
+			}
+		}
+		if(line)
+			completedLines.push(r);
+	}
+
+	if(completedLines.length > 0)
+		this.processCompleteLines(completedLines,g);
+	else
+		this.newBlock();
+}
+
+Game.prototype.processCompleteLines = function(rts,g)
+{
+	var al = rts.length, nc = this.numColumns,cell,r;
+	// remove cells view, clear grid matrix spots
+	for(var i = al; i-->0;)
+	{
+		r = rts[i];
+		this.points += this.pointsForLine;
+		for(var c = nc; c-->0;)
+		{
+			cell = g[r][c];
+			if(cell.parent)
+				cell.parent.removeChild(cell);
+			g[r][c] = null;
 		}
 	}
-	this.redistribute();
-	console.log("block created", this.id, this.offset.x, this.offset.y);
-}
-Block.prototype = Object.create(PIXI.Container.prototype);
-Block.prototype.destroy = function()
-{
-	while(this.cells.length)
-		this.cells.pop();
-	while(this.cellsMatrix.length)
-	{
-		while(this.cellsMatrix[0].length)
-			this.cellsMatrix[0].pop();
-		this.cellsMatrix.shift();
-	}
-	this.id = this.typeId = this.rotIndex = 0;
-	this.type = this.matrix = this.offset = this.len = this.cellsMatrix = this.cells = null;
-}
-Block.prototype.nextMatrix = function(v)
-{
-	return this.type[(this.rotIndex + (v?v:1)) % this.type.length];
-}
-Block.prototype.moveHor = function(v)
-{
-	this.offset.x += v;
-	this.x = this.offset.x * celwid;
-}
-Block.prototype.moveVer = function(v)
-{
-	this.offset.y += v;
-	this.y = this.offset.y * celwid;
-}
-Block.prototype.redistribute = function()
-{
-	var v,c,ci=0;
-	for(var i = 0, l = this.len; i < l; i++)
-	{
-		this.cellsMatrix[i] = [];
-		for(var j = 0, k = this.len; j < k; j++)
-		{
-			v = this.matrix[i][j];
-			if(!v) continue;
-			c = this.cells[ci++];
-			this.cellsMatrix[i][j] = c;
-			c.x = celwid * j;
-			c.y = celwid * i;
-		}
-	}
-	console.log("REDISTRIBUTE", this.id);
+	// count points for lines, trigger animations
+	this.animateDropLines(rts,g);
+	this.points += this.speedPoints;
+	this.updatePoints();
 }
 
-Block.prototype.rotate = function()
+Game.prototype.animateDropLines = function(rts,g)
 {
-	this.rotIndex +=1;
-	this.matrix = this.type[this.rotIndex % this.type.length];
-	this.redistribute();
+	//shift arrays
+	for(var i = rts.length; i -->0;)
+		g.unshift(g.splice(rts[i],1).pop());
+
+	// match to arrays
+	var max = Math.max.apply(null,rts), nc = this.numColumns, v,cell;
+	for(var r = 0; r <= max; r++)
+	{
+		v = r * celwid;
+		for(var c = nc; c-->0;)
+		{
+			cell = g[r][c];
+			if(!cell) continue;
+			TweenLite.to(cell, 0.4,{y : v, onComplete : animComplete});
+		}
+	}
+	// continue after animation
+	var completed = false;
+	function animComplete()
+	{
+		if(completed) return;
+		completed = true;
+		app.game.newBlock();
+	}
 }
+
+//-------------------- LINES DROP LOGIC ------------------- */
+//-------------------- POINTS UPDATE------------------- */
+
+Game.prototype.updatePoints = function()
+{
+	this.tfPoints.text = "Points: " + String(this.points);
+}
+
+Game.prototype.updateSpeedPoints = function()
+{
+	this.tfSpeedPoints.alpha = this.speedPoints > 0 ? 1 : 0;
+	this.tfSpeedPoints.text = String(this.speedPoints);
+}
+//-------------------- POINTS UPDATE------------------- */
