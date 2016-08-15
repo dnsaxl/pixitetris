@@ -42,7 +42,7 @@ Menu.prototype.redrawBackground = function()
 //---------------------- BUILD SECTION --------------------- */
 //------------------- API-create ------------------ */
 
-Menu.prototype.addElement = function(e,selectable=true)
+Menu.prototype.addElement = function(e,unselectable)
 {
 	if(!e || this.elements.indexOf(e) > -1 || !e.hasOwnProperty("label"))
 	{
@@ -55,14 +55,15 @@ Menu.prototype.addElement = function(e,selectable=true)
 	if(wid > this.maxwidth)
 		this.maxwidth = wid;
 
-	if(selectable)
+	if(!unselectable)
 		this.elements.push(e);
 	this.addChild(e.view);
 	this.redrawBackground();
 }
 
-Menu.prototype.addElements = function(...args)
+Menu.prototype.addElements = function()
 {
+	var args = Array.prototype.slice.call(arguments);
 	while(args.length)
 		this.addElement(args.shift());
 }

@@ -58,7 +58,7 @@ function buildGameOverMenu()
 	var e = {label:"exit", callback : onExitGame};
 
 	app.gameOverMenu = new Menu();
-	app.gameOverMenu.addElement(g,false);
+	app.gameOverMenu.addElement(g,true);
 	app.gameOverMenu.addElements(p,e);
 	app.gameOverMenu.selectDown();
 	positionMenu(app.gameOverMenu);
@@ -82,7 +82,7 @@ function buildCredits()
 	var e = {label:"exit", callback : onExitCredits};
 
 	app.credits = new Menu();
-	app.credits.addElement(p,false);
+	app.credits.addElement(p,true);
 	app.credits.addElement(e);
 	app.credits.selectDown();
 	positionMenu(app.credits);
