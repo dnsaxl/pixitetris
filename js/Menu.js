@@ -75,15 +75,10 @@ Menu.prototype.selectUp = function() { this.select(-1)};
 Menu.prototype.selectDown = function() { this.select(1)}
 Menu.prototype.select = function(v)
 {
-	var maxIndex = this.elements.length -1;
 	this.selectIndex += v;
-	if(this.selectIndex < 0)
-		this.selectIndex = maxIndex;
-	else if(this.selectIndex > maxIndex)
-		this.selectIndex = 0;
 	if(this.selectedElement != null)
 		this.selectedElement.view.style = this.styleUnselected;
-	this.selectedElement = this.elements[this.selectIndex];
+	this.selectedElement = this.elements[Math.abs(this.selectIndex) % this.elements.length];
 	this.selectedElement.view.style = this.styleSelected;
 }
 
