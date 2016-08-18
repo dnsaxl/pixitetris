@@ -18,6 +18,14 @@ APP.prototype.credits = null;
 
 APP.prototype.atlas = null;
 APP.prototype.texture = function(n) { return this.atlas ? this.atlas[n] : null };
+APP.prototype.keyMap = {
+	"37" : onLeftArrow,
+	"38" : onUpArrow,
+	"39" : onRightArrow,
+	"40" : onDownArrow,
+	"13" : onEnterKey,
+	"27" : onEscapeKey
+}
 
 //---------------------- CONSTRUCTOR SECTION --------------------- */
 //---------------------- BUILD SECTION --------------------- */
@@ -93,27 +101,9 @@ function buildCredits()
 
 function onKeyDown(e)
 {
-	switch(e.keyCode)
-	{
-		case 37:
-			onLeftArrow();
-			break;
-		case 38:
-			onUpArrow();
-			break;
-		case 39:
-			onRightArrow();
-			break;
-		case 40:
-			onDownArrow();
-			break;
-		case 13:
-			onEnterKey();
-			break;
-		case 27:
-			onEscapeKey();
-			break;
-	}
+	f = app.keyMap[e.keyCode];
+	if(f != null)
+		f();
 }
 
 function onLeftArrow()
