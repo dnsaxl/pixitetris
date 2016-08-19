@@ -18,6 +18,7 @@ Game = function()
 	var intervalId = 0;
 	var stylePoints =  {font:"16px Arial", fill:"white", align:"left"};
 	var styleSpeedPoints = {font:"16px Arial", fill:"white", align:"right"};
+	var laser = null;
 
 	
 	//---------------------- BUILD SECTION --------------------- */
@@ -27,6 +28,7 @@ Game = function()
 		buildGrid(this.numRows,this.numColumns);
 		buildTop();
 		buildPoints();
+		buildLaser();
 
 	}
 
@@ -75,6 +77,16 @@ Game = function()
 		updatePoints();
 		topbar.addChild(tfPoints);
 		topbar.addChild(tfSpeedPoints);
+	}
+
+	function buildLaser()
+	{
+		laser = new PIXI.Sprite.fromImage("assets/laser05.png");
+		laser.width = bgGrid.width;
+		laser.anchor.y = 0.5;
+		laser.blendMode = PIXI.BLEND_MODES.ADD;
+
+
 	}
 
 	//---------------------- BUILD SECTION --------------------- */
@@ -293,6 +305,7 @@ Game = function()
 
 	function processCompleteLines(rts,g)
 	{
+
 		var al = rts.length, nc = self.numColumns,cell,r;
 		// remove cells view, clear grid matrix spots
 		for(var i = al; i-->0;)
@@ -308,7 +321,8 @@ Game = function()
 			}
 		}
 		// count points for lines, trigger animations
-		animateDropLines(rts,g);
+		//animateDropLines(rts,g);
+		animateLasers(rts);
 		points += speedPoints;
 		updatePoints();
 	}
@@ -328,7 +342,7 @@ Game = function()
 			{
 				cell = g[r][c];
 				if(!cell) continue;
-				TweenLite.to(cell, 0.4,{y : v, onComplete : animComplete, ease: "easeInPower3"});
+				TweenMax.to(cell, 0.4,{y : v, onComplete : animComplete, ease: "easeInPower3"});
 			}
 		}
 		// continue after animation
@@ -338,6 +352,23 @@ Game = function()
 			if(completed) return;
 			completed = true;
 			newBlock();
+		}
+	}
+
+	function animateLasers(rts)
+	{
+		laser.y = (rts[0] + 2.5) * celwid;
+		laser.alpha = 1;
+		laser.scale.y = 0;
+		TweenMax.to(laser, 0.2,{alpha : 1, yoyo : true, repeat : 1});
+		TweenMax.to(laser.scale, 0.2, {y : 1, yoyo : true, repeat: 1, onComplete : remove})
+		self.addChild(laser);
+
+		function remove()
+		{
+			if(laser.parent)
+				laser.parent.removeChild(laser);
+			animateDropLines(rts, grid);
 		}
 	}
 
