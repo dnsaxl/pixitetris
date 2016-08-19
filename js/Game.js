@@ -25,7 +25,7 @@ Game = function()
 		buildPoints();
 
 	}
-	
+
 	function buildGrid(r,c)
 	{
 		var texture = self.getTexture('background.png');
@@ -311,7 +311,7 @@ Game = function()
 			{
 				cell = g[r][c];
 				if(!cell) continue;
-				TweenLite.to(cell, 0.4,{y : v, onComplete : animComplete});
+				TweenLite.to(cell, 0.4,{y : v, onComplete : animComplete, ease: "easeInPower3"});
 			}
 		}
 		// continue after animation

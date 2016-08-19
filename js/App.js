@@ -33,7 +33,6 @@ APP = function()
 	function buildGame()
 	{
 		self.game = new Game();
-		self.game.numColumns = 20;
 		self.game.onGameOver = self.onGameOver;
 		self.game.onPause = self.onPause;
 		self.game.build();
@@ -92,7 +91,6 @@ APP = function()
 
 	function onKeyDown(e)
 	{
-		console.log(eventsReceiver.hasOwnProperty("keyMap"));
 		if(eventsReceiver && eventsReceiver.hasOwnProperty("keyMap"))
 		{
 			var f = eventsReceiver.keyMap[String(e.keyCode)];
@@ -113,7 +111,6 @@ APP = function()
 				buildGame();
 			centralizeGame();
 			animatedAdd(self.game);
-			console.log("NOW ER IS ", eventsReceiver);
 			self.game.start();
 		}
 	}
