@@ -306,23 +306,24 @@ Game = function()
 	function processCompleteLines(rts,g)
 	{
 
-		var al = rts.length, nc = self.numColumns,cell,r;
-		// remove cells view, clear grid matrix spots
-		for(var i = al; i-->0;)
+		var removeBlocks = function()
 		{
-			r = rts[i];
-			points += self.pointsForLine;
-			for(var c = nc; c-->0;)
+			var al = rts.length, nc = self.numColumns,cell,r;
+			// remove cells view, clear grid matrix spots
+			for(var i = al; i-->0;)
 			{
-				cell = g[r][c];
-				if(cell.parent)
-					cell.parent.removeChild(cell);
-				g[r][c] = null;
+				r = rts[i];
+				points += self.pointsForLine;
+				for(var c = nc; c-->0;)
+				{
+					cell = g[r][c];
+					if(cell.parent)
+						cell.parent.removeChild(cell);
+					g[r][c] = null;
+				}
 			}
 		}
-		// count points for lines, trigger animations
-		//animateDropLines(rts,g);
-		animateLasers(rts);
+		animateLasers(rts,removeBlocks);
 		points += speedPoints;
 		updatePoints();
 	}
@@ -355,7 +356,7 @@ Game = function()
 		}
 	}
 
-	function animateLasers(rts)
+	function animateLasers(rts, onComplete)
 	{
 		laser.y = (rts[0] + 2.5) * celwid;
 		laser.alpha = 1;
@@ -368,6 +369,7 @@ Game = function()
 		{
 			if(laser.parent)
 				laser.parent.removeChild(laser);
+			onComplete();
 			animateDropLines(rts, grid);
 		}
 	}
