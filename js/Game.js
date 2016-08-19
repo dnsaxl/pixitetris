@@ -5,15 +5,19 @@ Game = function()
 	var self = this;
 
 	var bgGrid = null;
+	var topbar = null;
 	var tfPoints = null;
 	var tfSpeedPoints = null;
 	var currentBlock = null;
+	var nextBlock = null;
 	
 	var grid = null;
 	var numBlocks = 0;
 	var points = 0;
 	var speedPoints = 0;
 	var intervalId = 0;
+	var stylePoints =  {font:"16px Arial", fill:"white", align:"left"};
+	var styleSpeedPoints = {font:"16px Arial", fill:"white", align:"right"};
 
 	
 	//---------------------- BUILD SECTION --------------------- */
@@ -49,16 +53,19 @@ Game = function()
 
 	function buildTop()
 	{
-		var topbar= new PIXI.Graphics();
+		topbar = new PIXI.Graphics();
 		topbar.beginFill(0,0);
 		topbar.drawRect(0, 0, gridwid, celwid *2);
+
+		var tfnext = new PIXI.Text("NEXT:", stylePoints);
+		tfnext.x = bgGrid.width;
+		topbar.addChild(tfnext);
 		self.addChild(topbar);
 	}
 
 	function buildPoints()
 	{
-		var stylePoints =  {font:"16px Arial", fill:"white", align:"left"};
-		var styleSpeedPoints = {font:"16px Arial", fill:"white", align:"right"};
+		
 
 		tfPoints = new PIXI.Text("", stylePoints);
 		tfSpeedPoints = new PIXI.Text("",styleSpeedPoints);
@@ -66,8 +73,8 @@ Game = function()
 		tfSpeedPoints.x = bgGrid.width;
 
 		updatePoints();
-		self.addChild(tfPoints);
-		self.addChild(tfSpeedPoints);
+		topbar.addChild(tfPoints);
+		topbar.addChild(tfSpeedPoints);
 	}
 
 	//---------------------- BUILD SECTION --------------------- */
@@ -133,13 +140,23 @@ Game = function()
 
 	function newBlock()
 	{
-		currentBlock = null;
-		currentBlock = new Block();
-		currentBlock.moveHor(4); // initial pos;
-		currentBlock.moveVer(-1); // initial pos;
+		if(nextBlock == null)
+			nextBlock = new Block();
+
+		currentBlock = nextBlock;
+		currentBlock.x = currentBlock.y = 0;
+		currentBlock.moveHor(Math.floor(self.numColumns/2));
+		currentBlock.moveVer(-1);
+
+		bgGrid.addChild(currentBlock);
+
+		nextBlock = new Block();
+		nextBlock.x = celwid * self.numColumns;
+		nextBlock.y = celwid * 2;
+		self.addChild(nextBlock);
+		
 		speedPoints = 0;
 		updateSpeedPoints();
-		bgGrid.addChild(currentBlock);
 
 		var canPlace = validateNewBlockPosition();
 		if(!canPlace)
