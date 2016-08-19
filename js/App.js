@@ -2,282 +2,231 @@
 APP = function()
 {    
 	PIXI.Container.call( this );
+	var self = this;
 	document.body.addEventListener("keydown", onKeyDown);
-}
+	//---------------------- CONSTRUCTOR SECTION --------------------- */
 
-APP.prototype = Object.create(PIXI.Container.prototype);
-APP.prototype.constructor = APP;
-APP.prototype.build = build;
-APP.prototype.onResize = onResize;
+	var eventsReceiver = null;
+	//---------------------- BUILD SECTION --------------------- */
 
-APP.prototype.menu = new Menu();
-APP.prototype.game = null; 
-APP.prototype.gameOverMenu = null;
-APP.prototype.pauseMenu = null;
-APP.prototype.credits = null;
-
-APP.prototype.atlas = null;
-APP.prototype.texture = function(n) { return this.atlas ? this.atlas[n] : null };
-APP.prototype.keyMap = {
-	"37" : onLeftArrow,
-	"38" : onUpArrow,
-	"39" : onRightArrow,
-	"40" : onDownArrow,
-	"13" : onEnterKey,
-	"27" : onEscapeKey
-}
-
-//---------------------- CONSTRUCTOR SECTION --------------------- */
-//---------------------- BUILD SECTION --------------------- */
-
-function build()
-{
-	loadAssets();
-}
-
-function loadAssets()
-{
-	var loader = PIXI.loader;
-	loader.add(atlasURL);
-	loader.load(onAssetsLoaded);
-}
-
-function onAssetsLoaded()
-{
-	app.atlas = PIXI.loader.resources[atlasURL].textures;
-	buildMenu();
-}
-
-function buildMenu()
-{
-	var s = {label:"start", callback : onMenuStart};
-	var c = {label:"credits", callback : onMenuCredits};
-
-	app.menu.addElements(s, c);
-	app.menu.selectDown();
-	positionMenu(app.menu);
-	animatedAdd(app.menu);
-}
-
-function buildGameOverMenu()
-{
-	var g = {label:"GAME OVER", style : {font:"50px Arial", fill:"red", align:"center"}};
-	var p = {label:"play again", callback : onPlayAgain};
-	var e = {label:"exit", callback : onExitGame};
-
-	app.gameOverMenu = new Menu();
-	app.gameOverMenu.addElement(g,true);
-	app.gameOverMenu.addElements(p,e);
-	app.gameOverMenu.selectDown();
-	positionMenu(app.gameOverMenu);
-}
-
-function buildPauseMenu()
-{
-	var r = {label:"resume",  callback : onResume};
-	var p = {label:"play again", callback : onPlayAgain};
-	var e = {label:"exit", callback : onExitGame};
-
-	app.pauseMenu = new Menu();
-	app.pauseMenu.addElements(r,p,e);
-	app.pauseMenu.selectDown();
-	positionMenu(app.pauseMenu);
-}
-
-function buildCredits()
-{
-	var p = {label:desc, style : {font:"14px Arial", fill:"white", align:"center"}};
-	var e = {label:"exit", callback : onExitCredits};
-
-	app.credits = new Menu();
-	app.credits.addElement(p,true);
-	app.credits.addElement(e);
-	app.credits.selectDown();
-	positionMenu(app.credits);
-}
-
-//---------------------- BUILD SECTION --------------------- */
-//  ---------------- KEYBOARD EVENTS ------------------*/
-
-function onKeyDown(e)
-{
-	f = app.keyMap[e.keyCode];
-	if(f != null)
-		f();
-}
-
-function onLeftArrow()
-{
-	if(app.game && app.game.parent)
-		app.game.moveLeftCurrentBlock();
-}
-
-function onUpArrow()
-{
-	if(app.menu && app.menu.parent)
-		app.menu.selectUp();
-	else if(app.gameOverMenu && app.gameOverMenu.parent)
-		app.gameOverMenu.selectUp();
-	else if(app.pauseMenu && app.pauseMenu.parent)
-		app.pauseMenu.selectUp();
-	else if(app.game && app.game.parent)
-		app.game.rotateCurrentBlock();
-}
-
-function onRightArrow()
-{
-	if(app.game && app.game.parent)
-		app.game.moveRightCurrentBlock();
-}
-
-function onDownArrow()
-{
-	
-	if(app.menu && app.menu.parent)
-		app.menu.selectDown();
-	else if(app.gameOverMenu && app.gameOverMenu.parent)
-		app.gameOverMenu.selectDown();
-	else if(app.pauseMenu && app.pauseMenu.parent)
-		app.pauseMenu.selectDown();
-	else if(app.game && app.game.parent)
-		app.game.moveDownCurrentBlock(true);
-}
-
-function onEnterKey()
-{
-	if(app.menu && app.menu.parent)
-		app.menu.confirmSelection();
-	else if(app.gameOverMenu && app.gameOverMenu.parent)
-		app.gameOverMenu.confirmSelection();
-	else if(app.pauseMenu && app.pauseMenu.parent)
-		app.pauseMenu.confirmSelection();
-	else if(app.credits && app.credits.parent)
-		app.credits.confirmSelection();
-}
-
-function onEscapeKey()
-{
-	if(app.game && !app.game.isPaused)
-		onPause();
-}
-
-//  ---------------- KEYBOARD EVENTS ------------------*/
-//------------------- MECHANIC END POINTS ------------------ */
-function onMenuStart()
-{
-	if(app.menu.parent)
+	this.build = function()
 	{
-		animatedRemove(app.menu)
-		if(!app.game)
+		loadAssets();
+	}
+
+	function loadAssets()
+	{
+		var loader = PIXI.loader;
+		loader.add(atlasURL);
+		loader.load(onAssetsLoaded);
+
+	}
+
+	function onAssetsLoaded()
+	{
+		self.atlas = PIXI.loader.resources[atlasURL].textures;
+		Game.prototype.getTexture = self.getTexture;
+		Block.prototype.getTexture = self.getTexture;
+		buildMenu();
+	}
+
+	function buildGame()
+	{
+		self.game = new Game();
+		self.game.numColumns = 20;
+		self.game.onGameOver = self.onGameOver;
+		self.game.onPause = self.onPause;
+		self.game.build();
+	}
+
+	function buildMenu()
+	{
+		var s = {label:"start", callback : self.onMenuStart};
+		var c = {label:"credits", callback : self.onMenuCredits};
+		self.menu = new Menu();
+		self.menu.addElements(s, c);
+		self.menu.selectDown();
+		centralizeMenu(self.menu);
+		animatedAdd(self.menu);
+	}
+
+	function buildGameOverMenu()
+	{
+		var g = {label:"GAME OVER", style : {font:"50px Arial", fill:"red", align:"center"}};
+		var p = {label:"play again", callback : self.onPlayAgain};
+		var e = {label:"exit", callback : self.onExitGame};
+
+		self.gameOverMenu = new Menu();
+		self.gameOverMenu.addElement(g,true);
+		self.gameOverMenu.addElements(p,e);
+		self.gameOverMenu.selectDown();
+		centralizeMenu(self.gameOverMenu);
+	}
+
+	function buildPauseMenu()
+	{
+		var r = {label:"resume",  callback : self.onResume};
+		var p = {label:"play again", callback : self.onPlayAgain};
+		var e = {label:"exit", callback : self.onExitGame};
+
+		self.pauseMenu = new Menu();
+		self.pauseMenu.addElements(r,p,e);
+		self.pauseMenu.selectDown();
+		centralizeMenu(self.pauseMenu);
+	}
+
+	function buildCredits()
+	{
+		var p = {label:desc, style : {font:"14px Arial", fill:"white", align:"center"}};
+		var e = {label:"exit", callback : self.onExitCredits};
+
+		self.credits = new Menu();
+		self.credits.addElement(p,true);
+		self.credits.addElement(e);
+		self.credits.selectDown();
+		centralizeMenu(self.credits);
+	}
+
+	//---------------------- BUILD SECTION --------------------- */
+	//  ---------------- KEYBOARD EVENTS ------------------*/
+
+	function onKeyDown(e)
+	{
+		console.log(eventsReceiver.hasOwnProperty("keyMap"));
+		if(eventsReceiver && eventsReceiver.hasOwnProperty("keyMap"))
 		{
-			app.game = new Game(); // lazy instantiation for faster initial load
-			app.game.onGameOver = onGameOver;
+			var f = eventsReceiver.keyMap[String(e.keyCode)];
+			if(f != null)
+				f(e);
 		}
-		positionGame();
-		if(!app.game.parent)
-			animatedAdd(app.game)
-		app.game.start();
 	}
-}
 
-function onMenuCredits()
-{
-	animatedRemove(app.menu);
-	if(!app.credits)
-		buildCredits();
-	animatedAdd(app.credits);
-}
+	//  ---------------- KEYBOARD EVENTS ------------------*/
+	//------------------- MECHANIC END POINTS ------------------ */
 
-function onExitCredits()
-{
-	animatedRemove(app.credits);
-	animatedAdd(app.menu);
-}
-
-function onGameOver()
-{
-	if(!app.gameOverMenu)
-		buildGameOverMenu();
-	animatedAdd(app.gameOverMenu);
-}
-
-function onPlayAgain()
-{
-	animatedRemove(app.gameOverMenu);
-	animatedRemove(app.pauseMenu);
-	animatedAdd(app.game);
-	app.game.restart();
-}
-
-function onExitGame()
-{
-	animatedRemove(app.pauseMenu);
-	animatedRemove(app.gameOverMenu);
-	animatedRemove(app.game);
-	animatedAdd(app.menu);
-}
-
-function onPause()
-{
-	app.game.pause();
-	animatedRemove(app.game);
-	if(!app.pauseMenu)
-		buildPauseMenu();
-	animatedAdd(app.pauseMenu);
-}
-
-function onResume()
-{
-	animatedRemove(app.pauseMenu);
-	animatedAdd(app.game);
-	app.game.resume();
-}
-//------------------- MECHANIC END POINTS ------------------ */
-//------------------- RESPONSIVENESS ------------------ */
-
-function onResize()
-{
-	positionMenu(app.menu);
-	positionMenu(app.gameOverMenu);
-	positionMenu(app.credits);
-	positionGame();
-}
-
-function positionMenu(v)
-{
-	if(!v) return
-	v.x = w / 2;
-	v.y = (h - v.height) / 2;
-}
-
-function positionGame()
-{
-	if(!app.game) return;
-	resolveSize(app.game, renderer);
-	app.game.x = (w - app.game.width) / 2;
-	app.game.y = (h - app.game.height) / 2;
-}
-
-//------------------- RESPONSIVENESS ------------------ */
-//----------------------- HELPERS ------------------------ //
-
-function animatedRemove(t)
-{
-	if(!t || !t.parent) return;
-	function remove()
+	this.onMenuStart = function()
 	{
-		if(t.parent)
-			t.parent.removeChild(t);
+		if(self.menu.parent)
+		{
+			animatedRemove(self.menu)
+			if(!self.game)
+				buildGame();
+			centralizeGame();
+			animatedAdd(self.game);
+			console.log("NOW ER IS ", eventsReceiver);
+			self.game.start();
+		}
 	}
-	TweenLite.to(t, 0.4, {y:h, onComplete : remove});
-}
 
-function animatedAdd(t)
-{
-	t.y = -t.height;
-	app.addChild(t);
-	TweenLite.to(t, 0.4, {y:(h - t.height) / 2});
+	this.onMenuCredits = function()
+	{
+		animatedRemove(self.menu);
+		if(!self.credits)
+			buildCredits();
+		animatedAdd(self.credits);
+		self.state = ""
+	}
+
+	this.onExitCredits = function()
+	{
+		animatedRemove(self.credits);
+		animatedAdd(self.menu);
+	}
+
+	this.onGameOver = function()
+	{
+		if(!self.gameOverMenu)
+			buildGameOverMenu();
+		animatedAdd(self.gameOverMenu);
+	}
+
+	this.onPlayAgain = function()
+	{
+		animatedRemove(self.gameOverMenu);
+		animatedRemove(self.pauseMenu);
+		animatedAdd(self.game);
+		self.game.restart();
+	}
+
+	this.onExitGame = function()
+	{
+		animatedRemove(self.pauseMenu);
+		animatedRemove(self.gameOverMenu);
+		animatedRemove(self.game);
+		animatedAdd(self.menu);
+	}
+
+	this.onPause = function()
+	{
+		animatedRemove(self.game);
+		if(!self.pauseMenu)
+			buildPauseMenu();
+		animatedAdd(self.pauseMenu);
+	}
+
+	this.onResume = function()
+	{
+		animatedRemove(self.pauseMenu);
+		animatedAdd(self.game);
+		self.game.resume();
+	}
+
+	//------------------- MECHANIC END POINTS ------------------ */
+	//------------------- RESPONSIVENESS ------------------ */
+
+	function onResize()
+	{
+		centralizeMenu(self.menu);
+		centralizeMenu(self.gameOverMenu);
+		centralizeMenu(self.credits);
+		centralizeGame();
+	}
+
+	function centralizeGame()
+	{
+		if(!self.game) return;
+		resolveSize(self.game, renderer);
+		self.game.x = (w - self.game.width) / 2;
+		self.game.y = (h - self.game.height) / 2;
+	}
+
+	function centralizeMenu(v)
+	{
+		if(!v) return
+		v.x = w / 2;
+		v.y = (h - v.height) / 2;
+	}
+	//------------------- RESPONSIVENESS ------------------ */
+	//------------------- OTHER ------------------ */
+	this.getTexture = function(n) 
+	{ 
+		return self.atlas ? self.atlas[n] : null 
+	}
+
+	function animatedAdd(t,container,targetIsNotAnEventReceiver)
+	{
+		container = container || stage;
+		t.y = -t.height;
+		container.addChild(t);
+		TweenLite.to(t, 0.4, {y:(h - t.height) / 2});
+		if(!targetIsNotAnEventReceiver)
+			eventsReceiver = t;
+	}
+
+	function animatedRemove(t)
+	{
+		if(!t || !t.parent) return;
+		var remove = function()
+		{
+			if(t.parent)
+				t.parent.removeChild(t);
+		}
+		TweenLite.to(t, 0.4, {y:h, onComplete : remove});
+	}
 }
+APP.prototype = Object.create(PIXI.Container.prototype);
+
+//----------------------- HELPERS ------------------------ //
 
 function resolveSize(movable, static)
 {
