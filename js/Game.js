@@ -17,7 +17,7 @@ Game = function()
 	var speedPoints = 0;
 	var intervalId = 0;
 	var stylePoints =  {font:"16px Arial", fill:"white", align:"left"};
-	var styleSpeedPoints = {font:"16px Arial", fill:"white", align:"right"};
+	var styleSpeedPoints = {font:"16px Arial", fill:"white", align:"center"};
 	var laser = null;
 
 	
@@ -70,9 +70,9 @@ Game = function()
 		
 
 		tfPoints = new PIXI.Text("", stylePoints);
-		tfSpeedPoints = new PIXI.Text("",styleSpeedPoints);
-		tfSpeedPoints.anchor.x = 1;
-		tfSpeedPoints.x = bgGrid.width;
+		tfSpeedPoints = new PIXI.Text("bonus:",styleSpeedPoints);
+		tfSpeedPoints.x = bgGrid.width;//+ tfSpeedPoints.width/2;
+		tfSpeedPoints.y = Math.floor(self.numRows / 2) * celwid;
 
 		updatePoints();
 		topbar.addChild(tfPoints);
@@ -322,10 +322,11 @@ Game = function()
 					g[r][c] = null;
 				}
 			}
+			updatePoints();
 		}
 		animateLasers(rts,removeBlocks);
 		points += speedPoints;
-		updatePoints();
+		
 	}
 
 	function animateDropLines(rts,g)
@@ -379,13 +380,14 @@ Game = function()
 
 	function updatePoints()
 	{
-		tfPoints.text = "Points: " + String(points);
+		tfPoints.text = "POINTS: " + String(points);
 	}
 
 	function updateSpeedPoints()
 	{
-		tfSpeedPoints.alpha = speedPoints > 0 ? 1 : 0;
-		tfSpeedPoints.text = String(speedPoints);
+		TweenMax.killTweensOf(tfSpeedPoints);
+		TweenMax.to(tfSpeedPoints, 0.3,{alpha: speedPoints > 0 ? 1 : 0});
+		tfSpeedPoints.text = "BONUS:\n" + String(speedPoints);
 	}
 	//-------------------- POINTS UPDATE------------------- */
 	this.keyMap  = {
