@@ -29,6 +29,7 @@ Game = function()
 		buildTop();
 		buildPoints();
 		buildLasers();
+		buildButtons();
 
 	}
 
@@ -91,6 +92,56 @@ Game = function()
 			lasers[i] = laser;
 		}
 	}
+
+	function buildButtons()
+	{
+		var GAP = 15;
+		var btnLeft = new PIXI.Sprite(self.getTexture("left.png"));
+		var btnRight = new PIXI.Sprite(self.getTexture("right.png"));
+		var btnRotate = new PIXI.Sprite(self.getTexture("rotate.png"));
+		var btnSpeed = new PIXI.Sprite(self.getTexture("speed.png"));
+
+		btnLeft.x = -btnLeft.width;
+		btnLeft.y = bgGrid.y + bgGrid.height - btnLeft.height;
+
+		btnRight.x = bgGrid.x + bgGrid.width;
+		btnRight.y = btnLeft.y;
+
+		btnRotate.x = btnLeft.x;
+		btnRotate.y = btnLeft.y - btnRotate.height - GAP;
+
+		btnSpeed.x = btnRight.x;
+		btnSpeed.y = btnRotate.y;
+
+		addListeners(btnLeft, moveLeftCurrentBlock);
+		addListeners(btnRight, moveRightCurrentBlock);
+		addListeners(btnRotate, rotateCurrentBlock);
+		addListeners(btnSpeed, moveDownCurrentBlock);
+
+		self.addChild(btnLeft);
+		self.addChild(btnRight);
+		self.addChild(btnRotate);
+		self.addChild(btnSpeed);
+	}
+
+	function onMouseDown(t,f)
+	{
+		var id;
+		var onDown = function(e)
+		{
+			f();
+			id = setInterval(f,100);
+		}
+		var onUp = function(e)
+		{
+			clearInterval(id);
+		}
+
+		t.interactive = t.buttonMode = true;
+		t.mousedown  = t.touchstart = onDown;
+		t.mouseup = t.touchend = onUp;
+	}
+
 
 	//---------------------- BUILD SECTION --------------------- */
 	//------------------- MECHANIC END POINTS ------------------ */
