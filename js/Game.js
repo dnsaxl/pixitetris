@@ -18,7 +18,7 @@ Game = function()
 	var intervalId = 0;
 	var stylePoints =  {font:"16px Arial", fill:"white", align:"left"};
 	var styleSpeedPoints = {font:"16px Arial", fill:"white", align:"center"};
-	var laser = null;
+	var lasers = [];
 
 	
 	//---------------------- BUILD SECTION --------------------- */
@@ -28,7 +28,7 @@ Game = function()
 		buildGrid(this.numRows,this.numColumns);
 		buildTop();
 		buildPoints();
-		buildLaser();
+		buildLasers();
 
 	}
 
@@ -79,14 +79,17 @@ Game = function()
 		topbar.addChild(tfSpeedPoints);
 	}
 
-	function buildLaser()
+	function buildLasers()
 	{
-		laser = new PIXI.Sprite.fromImage("assets/laser05.png");
-		laser.width = bgGrid.width;
-		laser.anchor.y = 0.5;
-		laser.blendMode = PIXI.BLEND_MODES.ADD;
 
-
+		for(var i = 0; i < 4; i++)
+		{
+			var laser = new PIXI.Sprite(self.getTexture("laser"+i+".png"));
+			laser.width = bgGrid.width;
+			laser.anchor.y = 0.5;
+			laser.blendMode = PIXI.BLEND_MODES.ADD;
+			lasers[i] = laser;
+		}
 	}
 
 	//---------------------- BUILD SECTION --------------------- */
@@ -317,23 +320,53 @@ Game = function()
 				for(var c = nc; c-->0;)
 				{
 					cell = g[r][c];
+					if(!cell) continue;
 					if(cell.parent)
 						cell.parent.removeChild(cell);
 					g[r][c] = null;
 				}
 			}
+			//shift arrays
+			for(var i = rts.length; i -->0;)
+				g.unshift(g.splice(rts[i],1).pop());
+			// add points
+			points += speedPoints;
 			updatePoints();
 		}
+
 		animateLasers(rts,removeBlocks);
-		points += speedPoints;
+	}
+
+	function animateLasers(rts, onComplete)
+	{
+		for(var i = rts.length; i-->0;)
+		{
+
+			var laser = lasers[i];
+			laser.y = (rts[i] + 2.5) * celwid;
+			laser.alpha = 1;
+			laser.scale.y = 0;
+			TweenMax.to(laser, 0.2,{alpha : 1, yoyo : true, repeat : 1});
+			TweenMax.to(laser.scale, 0.2, {y : 1, yoyo : true, repeat: 1, onComplete : animComplete, onCompleteParams : [laser]})
+			self.addChild(laser);
+
+		}
 		
+		var completed = false;
+		function animComplete(l)
+		{
+			if(l.parent)
+				l.parent.removeChild(l);
+
+			if(completed) return;
+			completed = true;
+			onComplete();
+			animateDropLines(rts, grid);
+		}
 	}
 
 	function animateDropLines(rts,g)
 	{
-		//shift arrays
-		for(var i = rts.length; i -->0;)
-			g.unshift(g.splice(rts[i],1).pop());
 
 		// match to arrays
 		var max = Math.max.apply(null,rts), nc = self.numColumns, v,cell;
@@ -347,7 +380,6 @@ Game = function()
 				TweenMax.to(cell, 0.4,{y : v, onComplete : animComplete, ease: "easeInPower3"});
 			}
 		}
-		// continue after animation
 		var completed = false;
 		function animComplete()
 		{
@@ -355,25 +387,7 @@ Game = function()
 			completed = true;
 			newBlock();
 		}
-	}
-
-	function animateLasers(rts, onComplete)
-	{
-		laser.y = (rts[0] + 2.5) * celwid;
-		laser.alpha = 1;
-		laser.scale.y = 0;
-		TweenMax.to(laser, 0.2,{alpha : 1, yoyo : true, repeat : 1});
-		TweenMax.to(laser.scale, 0.2, {y : 1, yoyo : true, repeat: 1, onComplete : remove})
-		self.addChild(laser);
-
-		function remove()
-		{
-			if(laser.parent)
-				laser.parent.removeChild(laser);
-			onComplete();
-			animateDropLines(rts, grid);
-		}
-	}
+	}	
 
 	//-------------------- LINES DROP LOGIC ------------------- */
 	//-------------------- POINTS UPDATE------------------- */
@@ -409,9 +423,3 @@ Game.prototype.isPaused = false;
 
 Game.prototype.pointsForLine = 10;
 Game.prototype.tickInterval = 500;
-//---------------------- CONSTRUCTOR SECTION --------------------- */
-
-
-
-
-
