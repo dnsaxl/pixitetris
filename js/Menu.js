@@ -67,7 +67,7 @@ Menu = function()
 		{
 			elements.push(e);
 			e.view.interactive = true;
-			e.view.click = e.callback;
+			e.view.click = e.view.tap = e.callback;
 			e.view.mouseover = self.onMouseOver;
 			e.view.buttonMode = true;
 		}
