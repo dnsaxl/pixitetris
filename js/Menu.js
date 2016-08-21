@@ -63,9 +63,25 @@ Menu = function()
 		e.view = buildView(e.label,e.style);
 		var wid = e.view.width;
 		if(wid > maxwidth) maxwidth = wid;
-		if(!unselectable) elements.push(e);
+		if(!unselectable) 
+		{
+			elements.push(e);
+			e.view.interactive = true;
+			e.view.click = e.callback;
+			e.view.mouseover = self.onMouseOver;
+			e.view.buttonMode = true;
+		}
 		self.addChild(e.view);
 		redrawBackground();
+	}
+
+
+	this.onMouseOver = function(e)
+	{
+		var t = e.target;
+		for(var i = elements.length; i-->0;)
+			if(t === elements[i].view)			
+				return self.select(i-selectIndex);
 	}
 
 	this.addElements = function()
