@@ -171,7 +171,7 @@ APP = function()
 	//------------------- MECHANIC END POINTS ------------------ */
 	//------------------- RESPONSIVENESS ------------------ */
 
-	function onResize()
+	this.onResize = function()
 	{
 		centralizeMenu(self.menu);
 		centralizeMenu(self.gameOverMenu);
