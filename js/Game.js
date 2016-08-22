@@ -8,8 +8,13 @@ Game = function()
 	var topbar = null;
 	var tfPoints = null;
 	var tfSpeedPoints = null;
+	var tfnext = null;
 	var currentBlock = null;
 	var nextBlock = null;
+	var btnLeft = null;
+	var btnRight = null;
+	var btnRotate = null;
+	var btnSpeed = null;
 	
 	var grid = null;
 	var numBlocks = 0;
@@ -19,6 +24,7 @@ Game = function()
 	var stylePoints =  {font:"16px Arial", fill:"white", align:"left"};
 	var styleSpeedPoints = {font:"16px Arial", fill:"white", align:"center"};
 	var lasers = [];
+	var GAP = 15;
 
 	
 	//---------------------- BUILD SECTION --------------------- */
@@ -30,6 +36,7 @@ Game = function()
 		buildPoints();
 		buildLasers();
 		buildButtons();
+		positionAll();
 
 	}
 
@@ -57,11 +64,10 @@ Game = function()
 	function buildTop()
 	{
 		topbar = new PIXI.Graphics();
-		topbar.beginFill(0,0);
+		topbar.beginFill(0, 0);
 		topbar.drawRect(0, 0, gridwid, celwid *2);
 
-		var tfnext = new PIXI.Text("NEXT:", stylePoints);
-		tfnext.x = bgGrid.width;
+		tfnext = new PIXI.Text("NEXT:", stylePoints);
 		topbar.addChild(tfnext);
 		self.addChild(topbar);
 	}
@@ -69,11 +75,8 @@ Game = function()
 	function buildPoints()
 	{
 		
-
 		tfPoints = new PIXI.Text("", stylePoints);
 		tfSpeedPoints = new PIXI.Text("bonus:",styleSpeedPoints);
-		tfSpeedPoints.x = bgGrid.width;//+ tfSpeedPoints.width/2;
-		tfSpeedPoints.y = Math.floor(self.numRows / 2) * celwid;
 
 		updatePoints();
 		topbar.addChild(tfPoints);
@@ -87,6 +90,7 @@ Game = function()
 		{
 			var laser = new PIXI.Sprite(self.getTexture("laser"+i+".png"));
 			laser.width = bgGrid.width;
+			laser.x = bgGrid.x;
 			laser.anchor.y = 0.5;
 			laser.blendMode = PIXI.BLEND_MODES.ADD;
 			lasers[i] = laser;
@@ -95,23 +99,11 @@ Game = function()
 
 	function buildButtons()
 	{
-		var GAP = 15;
-		var btnLeft = new PIXI.Sprite(self.getTexture("left.png"));
-		var btnRight = new PIXI.Sprite(self.getTexture("right.png"));
-		var btnRotate = new PIXI.Sprite(self.getTexture("rotate.png"));
-		var btnSpeed = new PIXI.Sprite(self.getTexture("speed.png"));
-
-		btnLeft.x = -btnLeft.width;
-		btnLeft.y = bgGrid.y + bgGrid.height - btnLeft.height;
-
-		btnRight.x = bgGrid.x + bgGrid.width;
-		btnRight.y = btnLeft.y;
-
-		btnRotate.x = btnLeft.x;
-		btnRotate.y = btnLeft.y - btnRotate.height - GAP;
-
-		btnSpeed.x = btnRight.x;
-		btnSpeed.y = btnRotate.y;
+		
+		btnLeft = new PIXI.Sprite(self.getTexture("left.png"));
+		btnRight = new PIXI.Sprite(self.getTexture("right.png"));
+		btnRotate = new PIXI.Sprite(self.getTexture("rotate.png"));
+		btnSpeed = new PIXI.Sprite(self.getTexture("speed.png"));
 
 		addListeners(btnLeft, moveLeftCurrentBlock);
 		addListeners(btnRight, moveRightCurrentBlock);
@@ -124,17 +116,52 @@ Game = function()
 		self.addChild(btnSpeed);
 	}
 
-	function onMouseDown(t,f)
+	function positionAll()
 	{
-		var id;
+		bgGrid.x = btnLeft.width;
+		bgGrid.y = celwid *2;
+
+		tfnext.x =  bgGrid.x + bgGrid.width;
+
+		tfSpeedPoints.x = bgGrid.x + bgGrid.width;
+		tfSpeedPoints.y = Math.floor(self.numRows / 2) * celwid;
+
+		btnLeft.x = 0;
+		btnLeft.y = bgGrid.y + bgGrid.height - btnLeft.height;
+
+		btnRight.x = bgGrid.x + bgGrid.width;
+		btnRight.y = btnLeft.y;
+
+		btnRotate.x = btnRight.x;
+		btnRotate.y = btnLeft.y - btnRotate.height - GAP;
+
+		btnSpeed.x = 0;
+		btnSpeed.y = btnRotate.y;
+
+		for(var i = 0; i < lasers.length; i++)
+		{
+			
+			lasers[i].x = bgGrid.x;
+		}
+	}
+
+	function addListeners(t,f)
+	{
+		var delay = 300, frequency = 20;
 		var onDown = function(e)
 		{
-			f();
-			id = setInterval(f,100);
+			f(e);
+			e.target.timeOutId = setTimeout(setRepeat,delay,e);
 		}
 		var onUp = function(e)
 		{
-			clearInterval(id);
+			console.log("clear", e.target.intervalId, e.target.timeOutId, e);
+			clearTimeout(e.target.timeOutId);
+			clearInterval(e.target.intervalId);
+		}
+		var setRepeat = function(e)
+		{
+			e.target.intervalId = setInterval(f,frequency,e);
 		}
 
 		t.interactive = t.buttonMode = true;
@@ -217,7 +244,7 @@ Game = function()
 		bgGrid.addChild(currentBlock);
 
 		nextBlock = new Block();
-		nextBlock.x = celwid * self.numColumns;
+		nextBlock.x = bgGrid.x + bgGrid.width;
 		nextBlock.y = celwid * 2;
 		self.addChild(nextBlock);
 		
