@@ -151,17 +151,18 @@ Game = function()
 		var onDown = function(e)
 		{
 			f(e);
-			e.target.timeOutId = setTimeout(setRepeat,delay,e);
+			t.timeOutId = setTimeout(setRepeat,delay);
 		}
 		var onUp = function(e)
 		{
-			console.log("clear", e.target.intervalId, e.target.timeOutId, e);
-			clearTimeout(e.target.timeOutId);
-			clearInterval(e.target.intervalId);
+			clearTimeout(t.timeOutId);
+			clearInterval(t.intervalId);
 		}
 		var setRepeat = function(e)
 		{
-			e.target.intervalId = setInterval(f,frequency,e);
+			clearTimeout(t.timeOutId);
+			clearInterval(t.intervalId);
+			t.intervalId = setInterval(f,frequency,e);
 		}
 
 		t.interactive = t.buttonMode = true;
