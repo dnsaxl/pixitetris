@@ -21,8 +21,8 @@ Game = function()
 	var points = 0;
 	var speedPoints = 0;
 	var intervalId = 0;
-	var stylePoints =  {font:"16px Arial", fill:"white", align:"left"};
-	var styleSpeedPoints = {font:"16px Arial", fill:"white", align:"center"};
+	var leftAligned =  {font:"16px Arial", fill:"white", align:"left"};
+	var centerAligned = {font:"16px Arial", fill:"white", align:"center"};
 	var lasers = [];
 	var GAP = 15;
 
@@ -43,7 +43,8 @@ Game = function()
 	function buildGrid(r,c)
 	{
 		var texture = self.getTexture('background.png');
-		celwid = texture.crop.width;	
+		celwid = texture.crop.width;
+		GAP = celwid	
 		gridwid = celwid * c;
 		gridhei = celwid * r;
 
@@ -67,7 +68,8 @@ Game = function()
 		topbar.beginFill(0, 0);
 		topbar.drawRect(0, 0, gridwid, celwid *2);
 
-		tfnext = new PIXI.Text("NEXT:", stylePoints);
+		tfnext = new PIXI.Text("NEXT:", centerAligned);
+
 		topbar.addChild(tfnext);
 		self.addChild(topbar);
 	}
@@ -75,8 +77,8 @@ Game = function()
 	function buildPoints()
 	{
 		
-		tfPoints = new PIXI.Text("", stylePoints);
-		tfSpeedPoints = new PIXI.Text("bonus:",styleSpeedPoints);
+		tfPoints = new PIXI.Text("", leftAligned);
+		tfSpeedPoints = new PIXI.Text("bonus:",centerAligned);
 
 		updatePoints();
 		topbar.addChild(tfPoints);
@@ -118,10 +120,10 @@ Game = function()
 
 	function positionAll()
 	{
-		bgGrid.x = btnLeft.width;
+		bgGrid.x = btnLeft.width + GAP
 		bgGrid.y = celwid *2;
 
-		tfnext.x =  bgGrid.x + bgGrid.width;
+		tfnext.x =  bgGrid.x + bgGrid.width + GAP;
 
 		tfSpeedPoints.x = bgGrid.x + bgGrid.width;
 		tfSpeedPoints.y = Math.floor(self.numRows / 2) * celwid;
@@ -129,7 +131,7 @@ Game = function()
 		btnLeft.x = 0;
 		btnLeft.y = bgGrid.y + bgGrid.height - btnLeft.height;
 
-		btnRight.x = bgGrid.x + bgGrid.width;
+		btnRight.x = bgGrid.x + bgGrid.width + GAP;
 		btnRight.y = btnLeft.y;
 
 		btnRotate.x = btnRight.x;
@@ -139,10 +141,7 @@ Game = function()
 		btnSpeed.y = btnRotate.y;
 
 		for(var i = 0; i < lasers.length; i++)
-		{
-			
 			lasers[i].x = bgGrid.x;
-		}
 	}
 
 	function addListeners(t,f)
@@ -245,7 +244,7 @@ Game = function()
 		bgGrid.addChild(currentBlock);
 
 		nextBlock = new Block();
-		nextBlock.x = bgGrid.x + bgGrid.width;
+		nextBlock.x = bgGrid.x + bgGrid.width + GAP;
 		nextBlock.y = celwid * 2;
 		self.addChild(nextBlock);
 		
