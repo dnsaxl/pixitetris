@@ -99,5 +99,5 @@ Menu = function()
 }
 
 Menu.prototype = Object.create(PIXI.Graphics.prototype);
-Menu.prototype.styleSelected = {font:"50px Arial", fill:"white", align:"center"};
-Menu.prototype.styleUnselected = {font:"50px Arial", fill:"gray", align:"center"};
+Menu.prototype.styleSelected = {font:"90px Arial", fill:"white", align:"center"};
+Menu.prototype.styleUnselected = {font:"90px Arial", fill:"gray", align:"center"};
