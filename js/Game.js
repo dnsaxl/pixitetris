@@ -154,7 +154,7 @@ Game = function()
 		var onDown = function(e)
 		{
 			f(e);
-			t.timeOutId = setTimeout(setRepeat,delay);
+			t.timeOutId = setTimeout(setRepeat,delay,e);
 		}
 		var onUp = function(e)
 		{
