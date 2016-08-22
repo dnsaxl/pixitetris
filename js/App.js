@@ -241,7 +241,7 @@ function resolveSize(movable, static)
 		movable.width = movable.height * r;
 	}
 }
-var desc = "\n16h PIXI JS Tetris Game assesment\n\n" +
+var desc = "\n16h PIXI JS Tetris Game assessment\n\n" +
 "Denis Aleksandrowicz 2016\n\n" +
 "This is my very first JS app/game over 200 lines.\n" +
 "Lack of optimisation (no object pooling, no batching), poor events distribution,\n" +
