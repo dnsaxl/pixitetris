@@ -25,6 +25,10 @@ Game = function()
 	var centerAligned = {font:"16px Arial", fill:"white", align:"center"};
 	var lasers = [];
 	var GAP = 15;
+	var level = 0;
+	var levelMap = [1000,900,800,700,600,500,400,300,200,100,50,25];
+	var lines = 0;
+	var linesTillNextLevel = 10;
 
 	
 	//---------------------- BUILD SECTION --------------------- */
@@ -68,7 +72,7 @@ Game = function()
 		topbar.beginFill(0, 0);
 		topbar.drawRect(0, 0, gridwid, celwid *2);
 
-		tfnext = new PIXI.Text("NEXT:", centerAligned);
+		tfnext = new PIXI.Text("NEXT", centerAligned);
 
 		topbar.addChild(tfnext);
 		self.addChild(topbar);
@@ -125,7 +129,7 @@ Game = function()
 
 		tfnext.x =  bgGrid.x + bgGrid.width + GAP;
 
-		tfSpeedPoints.x = bgGrid.x + bgGrid.width;
+		tfSpeedPoints.x = bgGrid.x + bgGrid.width + GAP;
 		tfSpeedPoints.y = Math.floor(self.numRows / 2) * celwid;
 
 		btnLeft.x = 0;
@@ -184,12 +188,12 @@ Game = function()
 		newBlock();
 		updatePoints();
 		updateSpeedPoints();
-		intervalId = setInterval(self.tick,self.tickInterval);
+		intervalId = setInterval(self.tick,levelMap[level]);
 	}
 
 	this.restart = function()
 	{
-		points = speedPoints = numBlocks = 0;
+		points = speedPoints = numBlocks = level = lines = 0;
 		bgGrid.removeChildren();
 		g = grid;
 		for(var r = self.numRows; r-->0;)
@@ -211,7 +215,7 @@ Game = function()
 	this.resume = function()
 	{
 		self.isPaused = false;
-		intervalId = setInterval(self.tick,self.tickInterval);
+		intervalId = setInterval(self.tick,levelMap[level]);
 	}
 
 	this.tick = function()
@@ -395,6 +399,8 @@ Game = function()
 			{
 				r = rts[i];
 				points += self.pointsForLine;
+				if((++lines % linesTillNextLevel) == 0)
+					levelUp();
 				for(var c = nc; c-->0;)
 				{
 					cell = g[r][c];
@@ -465,7 +471,16 @@ Game = function()
 			completed = true;
 			newBlock();
 		}
-	}	
+	}
+
+	function levelUp()
+	{
+		if(++level < levelMap.length)
+		{
+			clearInterval(intervalId);
+			intervalId = setInterval(self.tick,levelMap[level]);
+		}
+	}
 
 	//-------------------- LINES DROP LOGIC ------------------- */
 	//-------------------- POINTS UPDATE------------------- */
@@ -479,7 +494,7 @@ Game = function()
 	{
 		TweenMax.killTweensOf(tfSpeedPoints);
 		TweenMax.to(tfSpeedPoints, 0.3,{alpha: speedPoints > 0 ? 1 : 0});
-		tfSpeedPoints.text = "BONUS:\n" + String(speedPoints);
+		tfSpeedPoints.text = "BONUS\n" + String(speedPoints);
 	}
 	//-------------------- POINTS UPDATE------------------- */
 	this.keyMap  = {
@@ -500,4 +515,3 @@ Game.prototype.isStarted = false;
 Game.prototype.isPaused = false;
 
 Game.prototype.pointsForLine = 10;
-Game.prototype.tickInterval = 500;
